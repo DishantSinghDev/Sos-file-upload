@@ -1,5 +1,4 @@
 import express, { Request, Response } from "express";
-import fs from "fs";
 import path from 'path';
 import multer from 'multer';
 import cors from 'cors';
@@ -38,6 +37,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
 
 // Serve static files from the "images" directory
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use(cors());
 
 
 app.listen(port, () => {
