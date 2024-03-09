@@ -13,27 +13,23 @@ const site_url = "https://localhost:3001"
 // Set up pg-promise
 const db = pgp()('postgresql://postgres:53F35cCbAGd4C6bCgB25e5cAbDDDD4Ca@viaduct.proxy.rlwy.net:58104/railway');
 
+db.none(`
+  CREATE TABLE IF NOT EXISTS images (
+    id SERIAL PRIMARY KEY,
+    data BYTEA
+  )
+`)
+.then(() => console.log('Table created successfully.'))
+.catch(err => console.error('Error creating table:', err));
 
-// Set up multer to store files in the 'images' directory
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'images')
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        cb(null, file.fieldname + '-' + uniqueSuffix)
-    }
-})
 
-const upload = multer({ storage: storage })
-
+// Set up multer to store files in memory
+const upload = multer({ storage: multer.memoryStorage() });
 
 app.post('/upload', upload.single('image'), async (req, res) => {
-    const file = req.file as unknown as Express.Multer.File;
+    const file = req.file as Express.Multer.File;
     try {
-        const img = await fs.promises.readFile(file.path);
-        await db.none('INSERT INTO images(data) VALUES($1)', [img]);
-        await fs.promises.unlink(file.path); // delete file from 'uploads' directory
+        await db.none('INSERT INTO images(data) VALUES($1)', [file.buffer]);
         res.send('Image uploaded successfully.');
       } catch (err) {
         console.error(err);
