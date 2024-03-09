@@ -2,11 +2,17 @@ import express, { Request, Response } from "express";
 import path from 'path';
 import multer from 'multer';
 import cors from 'cors';
+import pgp from 'pg-promise';
+import fs from 'fs';
 
 const app = express();
 app.use(cors());
 const port = 3001
 const site_url = "https://localhost:3001"
+
+// Set up pg-promise
+const db = pgp()('postgresql://postgres:53F35cCbAGd4C6bCgB25e5cAbDDDD4Ca@viaduct.proxy.rlwy.net:58104/railway');
+
 
 // Set up multer to store files in the 'images' directory
 const storage = multer.diskStorage({
@@ -22,17 +28,17 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 
 
-app.post('/upload', upload.single('image'), (req, res) => {
-    // The file is automatically stored in 'images'
-    // 'image' is the field name from the form
-    // req.file is the 'image' file
-    // req.body will hold the text fields, if there were any
-
-    // You can now construct the URL to the file, which would be something like:
-    const fileUrl = `${site_url}/images/${req.file?.filename}`;
-
-    // Send the URL of the file back to the client
-    res.send({ fileUrl: fileUrl });
+app.post('/upload', upload.single('image'), async (req, res) => {
+    const file = req.file as unknown as Express.Multer.File;
+    try {
+        const img = await fs.promises.readFile(file.path);
+        await db.none('INSERT INTO images(data) VALUES($1)', [img]);
+        await fs.promises.unlink(file.path); // delete file from 'uploads' directory
+        res.send('Image uploaded successfully.');
+      } catch (err) {
+        console.error(err);
+        res.status(500).send('An error occurred.');
+      }
 });
 
 // Serve static files from the "images" directory
