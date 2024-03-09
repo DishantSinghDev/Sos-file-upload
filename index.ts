@@ -5,6 +5,7 @@ import multer from 'multer';
 import cors from 'cors';
 
 const app = express();
+app.use(cors());
 const port = 3001
 const site_url = "https://localhost:3001"
 
@@ -37,7 +38,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
 
 // Serve static files from the "images" directory
 app.use('/images', express.static(path.join(__dirname, 'images')));
-app.use(cors());
+
 
 app.listen(port, () => {
     console.log("Server is running on port 3001")
