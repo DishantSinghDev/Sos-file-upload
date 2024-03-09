@@ -43,3 +43,4 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 app.listen(port, () => {
     console.log("Server is running on port 3001")
 })
+module.exports = app;
